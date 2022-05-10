@@ -1,0 +1,127 @@
+<!--
+    By Cássio da Silva Carneiro
+    oissac22@hotmail.com
+    Brazil
+-->
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+    <script type="text/javascript" defer>
+
+        const TIME_FRAMES = 1000 / 30;
+        const RATIO = Math.PI / 180;
+        const VIEW_SIZE = { w: 800, h: 800 };
+
+        const View = {
+            /** @type {HTMLCanvasElement} */
+            canvas: null,
+            /** @type {CanvasRenderingContext2D} */
+            context: null,
+            get width() { return this.canvas.width },
+            get height() { return this.canvas.height },
+            create() {
+                this.canvas = document.getElementById('view');
+                this.canvas.width = VIEW_SIZE.w;
+                this.canvas.height = VIEW_SIZE.h;
+                this.context = this.canvas.getContext('2d')
+            },
+            start(callback) {
+                setInterval(() => {
+                    this.context.fillStyle = '#000';
+                    this.context.fillRect(0, 0, this.width, this.height)
+                    if (callback)
+                        callback();
+                }, TIME_FRAMES);
+            }
+        }
+        /** @type {(imageSrc:string)=>void} */
+        function CSprit(imageSrc) {
+            let _x = 0;
+            let _y = 0;
+            let _angle = 0;
+            let image = new Image();
+            image.src = imageSrc;
+
+            /** @type {(x:number, y:number)=>void} */
+            this.position = (x, y) => {
+                _x = x;
+                _y = y;
+            }
+            /** @type {(x:number, y:number)=>void} */
+            this.move = (x, y) => {
+                _x += x;
+                _y += y;
+            }
+
+            /** @type {(w?:number, h?:number)=>void} */
+            this.draw = (w, h) => {
+                if (this.onAfterDraw) this.onAfterDraw();
+                View.context.save();
+                View.context.translate(_x, _y)
+                View.context.rotate(RATIO * _angle)
+                if (w & h)
+                    View.context.drawImage(image, -w / 2, -h / 2, w, h);
+                else
+                    View.context.drawImage(image, -image.width / 2, -image.height / 2);
+                if (this.onDraw) this.onDraw();
+                View.context.restore();
+                if (this.onBeforeDraw) this.onBeforeDraw();
+            }
+            /** @type {(angle:number)=>void} */
+            this.angle = (angle) => {
+                _angle = angle;
+            }
+            /** @type {(angle:number)=>void} */
+            this.rotate = (angle) => {
+                _angle += angle;
+            }
+
+            this.onBeforeDraw = null;
+            this.onDraw = null;
+            this.onAfterDraw = null;
+        }
+
+        // team logo configuration
+        const team = new CSprit('/team.png')
+        team.position(100, -100)
+        team.onBeforeDraw = function () {
+            this.rotate(-8)
+        }
+
+        // sonic configuration
+        const sonic1 = new CSprit('/sonic.png');
+        sonic1.position(VIEW_SIZE.w / 2, VIEW_SIZE.h / 2)
+        sonic1.onBeforeDraw = function () {
+            this.rotate(2)
+        }
+        sonic1.onDraw = function () {
+            team.draw(50, 50);
+        }
+
+        // start
+        window.addEventListener('load', () => {
+            View.create();
+            View.start(() => {
+                sonic1.draw();
+            });
+        })
+    </script>
+</head>
+
+<body>
+    <canvas width="2000" height="1000" id='view' style="max-width:100%; max-height: 100%;"></canvas>
+</body>
+
+</html>
